@@ -7,3 +7,5 @@
 /trance footwork megamix.wav
 /weird haus.wav
 *.wav
+commands/__pycache__
+*.pyc
