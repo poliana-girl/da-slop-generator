@@ -9,3 +9,4 @@
 *.wav
 commands/__pycache__
 *.pyc
+*.brk
