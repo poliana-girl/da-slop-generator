@@ -8,7 +8,7 @@ import datetime
 
 import command
 
-from commands import blur_avrg, blur_blur, caltrain_caltrain, blur_chorus, blur_drunk, blur_noise
+from commands import blur_avrg, blur_blur, caltrain_caltrain, blur_chorus, blur_drunk, blur_noise, blur_scatter, blur_shuffle
 
 # example_parameter_list = [30, 90]
 # example_command = Command("example", 2, example_parameter_list)
@@ -100,7 +100,7 @@ def merge(left_channel, right_channel):
     subprocess.check_call(['ffmpeg', '-i', left_channel, '-i', right_channel, '-filter_complex', "[0:a][1:a]join=inputs=2:channel_layout=stereo[a]", '-map', "[a]", directory + merged_wav_directory_name + "/" + finished_sound_name])
     
 def choose_function():
-    function_list = [blur_avrg.make_command, blur_blur.make_command, caltrain_caltrain.make_command]
+    function_list = [blur_avrg.make_command, blur_blur.make_command, caltrain_caltrain.make_command, blur_chorus.make_command, blur_drunk.make_command, blur_noise.make_command, blur_scatter.make_command, blur_shuffle.make_command]
     return random.choice(function_list)()
 
 
@@ -120,7 +120,7 @@ for i in range(int(slops_to_generate)):
     # random_command = choose_function()
 
     # uncomment to test out a certain command instead of a random one
-    random_command = blur_noise.make_command()
+    random_command = blur_shuffle.make_command()
 
     test = execute_command(directory, sound, random_command)
 
