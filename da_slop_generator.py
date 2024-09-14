@@ -22,6 +22,8 @@ directory = sys.argv[1]
 original_channel_splits_directory_name = "orig_channel_splits"
 original_ana_directory_name = "orig_ana"
 new_ana_directory_name = "new_ana"
+new_wav_directory_name = "new_wav"
+merged_wav_directory_name = "FINISHED"
 
 def create_splits(directory):
     if not os.path.exists(directory + original_channel_splits_directory_name):
@@ -74,10 +76,18 @@ def execute_command(directory, sound, command):
     return new_ana_l, new_ana_r
 
 def synth(left_channel, right_channel):
-    # pvoc synth sound.ana sound.wav
-    subprocess.check_call(['pvoc', 'synth', left_channel, Path(l).stem + ".wav"])
-    subprocess.check_call(['pvoc', 'synth', right_channel, Path(r).stem + ".wav"])
+    if not os.path.exists(directory + new_wav_directory_name):
+        os.mkdir(directory + new_wav_directory_name)
+    new_wav_l = directory + new_wav_directory_name + "/" + Path(left_channel).stem + ".wav"
+    new_wav_r = directory + new_wav_directory_name + "/" + Path(right_channel).stem + ".wav"
+    subprocess.check_call(['pvoc', 'synth', left_channel, new_wav_l])
+    subprocess.check_call(['pvoc', 'synth', right_channel, new_wav_r])
+    return new_wav_l, new_wav_r
 
+def merge(left_channel, right_channel):
+    # ffmpeg -i left.wav -i right.wav -filter_complex "[0:a][1:a]join=inputs=2:channel_layout=stereo[a]" -map "[a]" output.wav
+    subprocess.check_call(['ffmpeg', '-i', left_channel, '-i', right_channel, '-filter_complex', "[0:a][1:a]join=inputs=2:channel_layout=stereo[a]", '-map', "[a]", 'merge-placeholder-name.wav'])
+    
 # TODO: make function to merge l and r into one file and make a folder to house all "FINISHED" files 
 # make more command types; will probably need some trial and error on my part to find out what values u can shove into a command
 # consider taking out all the subprocess shit and just outputting all the commands into a bash script that u can run whenever
@@ -86,13 +96,11 @@ def synth(left_channel, right_channel):
 
 create_splits(directory)
 create_anas(directory)
-# sound = choose_sound(directory)
-# example_command2 = blur_avrg.make_command()
+sound = choose_sound(directory)
+example_command2 = blur_avrg.make_command()
 
-# test = execute_command(directory, sound, example_command2)
-# # print(test)
-# synth(test[0], test[1])
+test = execute_command(directory, sound, example_command2)
 
+test2 = synth(test[0], test[1])
 
-
-
+merge(test2[0], test2[1])
