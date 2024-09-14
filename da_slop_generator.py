@@ -8,7 +8,7 @@ import datetime
 
 import command
 
-from commands import blur_avrg, blur_blur, caltrain_caltrain
+from commands import blur_avrg, blur_blur, caltrain_caltrain, blur_chorus
 
 # example_parameter_list = [30, 90]
 # example_command = Command("example", 2, example_parameter_list)
@@ -61,11 +61,11 @@ def execute_command(directory, sound, command):
     if not os.path.exists(directory + new_ana_directory_name):
         os.mkdir(directory + new_ana_directory_name)
 
-    current_time = datetime.datetime.now().strftime("%I:%M%p") 
+    current_time = datetime.datetime.now().strftime("%I:%M:%S%p") 
     orig_ana_l = directory + original_ana_directory_name + "/" + Path(sound).stem + "_L.ana"
-    new_ana_l = directory + new_ana_directory_name + "/" + Path(sound).stem + "_" + command.name.replace(" ", "_") + current_time + "_L.ana"
+    new_ana_l = directory + new_ana_directory_name + "/" + Path(sound).stem + "_" + command.name.replace(" ", "_")  + "_" + current_time + "_L.ana"
     orig_ana_r = directory + original_ana_directory_name + "/" + Path(sound).stem + "_R.ana"
-    new_ana_r = directory + new_ana_directory_name + "/" + Path(sound).stem + "_" + command.name.replace(" ", "_") + current_time + "_R.ana"
+    new_ana_r = directory + new_ana_directory_name + "/" + Path(sound).stem + "_" + command.name.replace(" ", "_")  + "_" + current_time + "_R.ana"
 
     command_split = command.name.split()
     command_l = command_split + [orig_ana_l, new_ana_l]
@@ -117,8 +117,10 @@ for i in range(int(slops_to_generate)):
 
     sound = choose_sound(directory)
 
-    random_command = choose_function()
-    # test command = blur_blur.make_command()
+    # random_command = choose_function()
+
+    # uncomment to test out a certain command instead of a random one
+    random_command = blur_chorus.make_command()
 
     test = execute_command(directory, sound, random_command)
 
