@@ -8,7 +8,7 @@ import datetime
 
 import command
 
-from commands import blur_avrg, blur_blur, caltrain_caltrain, blur_chorus
+from commands import blur_avrg, blur_blur, caltrain_caltrain, blur_chorus, blur_drunk
 
 # example_parameter_list = [30, 90]
 # example_command = Command("example", 2, example_parameter_list)
@@ -120,7 +120,7 @@ for i in range(int(slops_to_generate)):
     # random_command = choose_function()
 
     # uncomment to test out a certain command instead of a random one
-    random_command = blur_chorus.make_command()
+    random_command = blur_drunk.make_command()
 
     test = execute_command(directory, sound, random_command)
 
