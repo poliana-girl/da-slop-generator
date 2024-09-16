@@ -8,7 +8,7 @@ import datetime
 
 import command
 
-from commands import blur_avrg, blur_blur, caltrain_caltrain, blur_chorus, blur_drunk, blur_noise, blur_scatter, blur_shuffle
+from commands import blur_avrg, blur_blur, caltrain_caltrain, blur_chorus, blur_drunk, blur_noise, blur_scatter, blur_shuffle, blur_spread, blur_suppress, combine_cross
 
 # example_parameter_list = [30, 90]
 # example_command = Command("example", 2, example_parameter_list)
@@ -54,6 +54,16 @@ def choose_sound(directory):
             return choice
         else:
             continue
+
+def choose_two_sounds(directory):
+        while True:
+            choice1 = random.choice(os.listdir(directory))
+            if choice1.endswith(".wav"):
+                choice2 = random.choice(os.listdir(directory))
+                if choice1 != choice2 and choice2.endswith(".wav"):
+                    return choice1, choice2
+            else:
+                continue
     
 
 def execute_command(directory, sound, command):
@@ -80,6 +90,35 @@ def execute_command(directory, sound, command):
 
     return new_ana_l, new_ana_r
 
+def execute_command2(directory, sound1, sound2, command):
+    # final = [command.name, Path(directory + sound).stem + "_L.ana", Path(directory + sound).stem + command.name.replace(" ", "_") + "_L.ana"]
+    if not os.path.exists(directory + new_ana_directory_name):
+        os.mkdir(directory + new_ana_directory_name)
+
+    current_time = datetime.datetime.now().strftime("%I:%M:%S%p") 
+    orig_ana_l1 = directory + original_ana_directory_name + "/" + Path(sound1).stem + "_L.ana"
+    orig_ana_r1 = directory + original_ana_directory_name + "/" + Path(sound1).stem + "_R.ana"
+
+    orig_ana_l2 = directory + original_ana_directory_name + "/" + Path(sound2).stem + "_L.ana"
+    orig_ana_r2 = directory + original_ana_directory_name + "/" + Path(sound2).stem + "_R.ana"
+
+    new_ana_l = directory + new_ana_directory_name + "/" + Path(sound1).stem + Path(sound2).stem + "_" + command.name.replace(" ", "_")  + "_" + current_time + "_L.ana"
+    new_ana_r = directory + new_ana_directory_name + "/" + Path(sound1).stem + Path(sound2).stem + "_" + command.name.replace(" ", "_")  + "_" + current_time + "_R.ana"
+
+    command_split = command.name.split()
+    command_l = command_split + [orig_ana_l1, orig_ana_l2, new_ana_l]
+    command_r = command_split + [orig_ana_r1, orig_ana_r2, new_ana_r]
+
+    for i in range(command.number_of_parameters):
+        command_l.append(str(command.parameter_list[i]))
+        command_r.append(str(command.parameter_list[i]))
+
+    subprocess.check_call(command_l)
+    subprocess.check_call(command_r)
+
+    return new_ana_l, new_ana_r
+
+
 def synth(left_channel, right_channel):
     if not os.path.exists(directory + new_wav_directory_name):
         os.mkdir(directory + new_wav_directory_name)
@@ -103,6 +142,10 @@ def choose_function():
     function_list = [blur_avrg.make_command, blur_blur.make_command, caltrain_caltrain.make_command, blur_chorus.make_command, blur_drunk.make_command, blur_noise.make_command, blur_scatter.make_command, blur_shuffle.make_command]
     return random.choice(function_list)()
 
+def choose_function2():
+    function_list = [combine_cross.make_command]
+    return random.choice(function_list)()
+
 
 # TODO: 
 # make more command types; will probably need some trial and error on my part to find out what values u can shove into a command
@@ -110,21 +153,58 @@ def choose_function():
 # also it looks like the command format isn't ALWAYS command infile outfile param1 param2 sometimes there are 2 infiles.
 
 
+# 0. split channels and create .ana files
 create_splits(directory)
 create_anas(directory)
 
+# MAIN LOOP
 for i in range(int(slops_to_generate)):
 
-    sound = choose_sound(directory)
+    # FORK IN THE ROAD
+    # first we need to choose whether to perform a command on a single sound, or on two different sounds
+    # 70% chance of single sound, 30% chance of two sounds
 
-    # random_command = choose_function()
+    if random.random() < 0.7:
+        # SINGLE SOUND
+        
+        # 1. choose a file to use with a command
+        sound = choose_sound(directory)
 
-    # uncomment to test out a certain command instead of a random one
-    random_command = blur_shuffle.make_command()
+        # 2. choose a random command
+        random_command = choose_function()
 
-    test = execute_command(directory, sound, random_command)
+        # uncomment to test out a certain command instead of a random one
+        # random_command = blur_suppress.make_command()
 
-    test2 = synth(test[0], test[1])
+        # 3. execute that command
+        test = execute_command(directory, sound, random_command)
 
-    merge(test2[0], test2[1])
+        # 4. convert resulting .ana files into .wav files for each channel
+        test2 = synth(test[0], test[1])
+
+        # 5. merge .wav files together into the final product
+        merge(test2[0], test2[1])
+    
+    else:
+        # TWO DIFFERENT SOUNDS
+
+        # 1. choose two files to use with a command
+        sound1, sound2 = choose_two_sounds(directory)
+
+        # 2. choose a command
+        random_command = choose_function2()
+
+        # uncomment to test out a certain command instead of a random one
+        # random_command = combine_cross.make_command()
+
+        # 3. execute that command
+        exec = execute_command2(directory, sound1, sound2, random_command)
+
+        # 4. convert resulting .ana files into .wav files for each channel
+        test2 = synth(exec[0], exec[1])
+
+        # 5. merge .wav files together into the final product
+        merge(test2[0], test2[1])
+
+
 

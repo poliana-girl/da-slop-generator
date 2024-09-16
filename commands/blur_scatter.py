@@ -14,11 +14,11 @@ def make_command():
     parameter3_value = random.uniform(1, 513)
     parameter3 = "-r" + str(parameter3_value)
     parameter1 = random.uniform(2, parameter3_value)
-    print("blocks to keep:", parameter1)
+    # print("blocks to keep:", parameter1)
     parameter2 = "-b" + str(random.uniform(50,70))
     
     
-    print("blocks per window:", parameter3)
+    # print("blocks per window:", parameter3)
     parameter_list = [parameter1, parameter2, parameter3]
     return Command("blur scatter", 3, parameter_list)
 

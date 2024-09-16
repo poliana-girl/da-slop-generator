@@ -24,7 +24,6 @@ def make_command():
     image = ""
     for i in range(random.randint(10, 30)):
         image = random.choice(letters) + image
-    print(image)
     parameter1 = "abcdefg-" + image
     parameter2 = random.uniform(5, 300)
     parameter_list = [parameter1, parameter2]
