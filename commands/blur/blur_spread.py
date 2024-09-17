@@ -14,12 +14,12 @@ import breakpoint_generator
 
 def make_command():
     if random.random() < 0.5:
-        print("-f mode")
+        # print("-f mode")
         parameter1 = "-f" + str(random.uniform(2,256))
         parameter_list = [parameter1]
         return Command("blur spread", 1, parameter_list)
     else:
-        print("-p mode")
+        # print("-p mode")
         parameter1 = "-p" + str(random.uniform(1,12))
         parameter2 = "-s" + breakpoint_generator.breakpoint_generator(0, 1)
         parameter_list = [parameter1, parameter2]

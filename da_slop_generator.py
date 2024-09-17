@@ -10,6 +10,7 @@ import command
 
 from commands.blur import blur_avrg, blur_blur, caltrain_caltrain, blur_chorus, blur_drunk, blur_noise, blur_scatter, blur_shuffle, blur_spread, blur_suppress
 from commands.combine import combine_cross, combine_diff, combine_interleave, combine_max, combine_mean, specsphinx_specsphinx, spectwin_spectwin, combine_sum
+from commands.focus import superaccu_superaccu, focus_exag, focus_focus, focus_fold, focus_freeze, focus_step
 
 # example_parameter_list = [30, 90]
 # example_command = Command("example", 2, example_parameter_list)
@@ -144,7 +145,7 @@ def choose_function():
     return random.choice(function_list)()
 
 def choose_function2():
-    function_list = [combine_cross.make_command]
+    function_list = [combine_cross.make_command, combine_diff.make_command, combine_interleave.make_command, combine_max.make_command, combine_mean.make_command, specsphinx_specsphinx.make_command, spectwin_spectwin.make_command, combine_sum.make_command]
     return random.choice(function_list)()
 
 
@@ -165,17 +166,17 @@ for i in range(int(slops_to_generate)):
     # first we need to choose whether to perform a command on a single sound, or on two different sounds
     # 70% chance of single sound, 30% chance of two sounds
 
-    if False: # random.random() < 0.7:
+    if True: # random.random() < 0.7:
         # SINGLE SOUND
         
         # 1. choose a file to use with a command
         sound = choose_sound(directory)
 
         # 2. choose a random command
-        random_command = choose_function()
+        # random_command = choose_function()
 
         # uncomment to test out a certain command instead of a random one
-        # random_command = blur_suppress.make_command()
+        random_command = focus_step.make_command()
 
         # 3. execute that command
         test = execute_command(directory, sound, random_command)
@@ -193,10 +194,10 @@ for i in range(int(slops_to_generate)):
         sound1, sound2 = choose_two_sounds(directory)
 
         # 2. choose a command
-        # random_command = choose_function2()
+        random_command = choose_function2()
 
         # uncomment to test out a certain command instead of a random one
-        random_command = combine_sum.make_command()
+        # random_command = combine_sum.make_command()
 
         # 3. execute that command
         exec = execute_command2(directory, sound1, sound2, random_command)

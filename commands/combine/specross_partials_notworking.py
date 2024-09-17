@@ -1,4 +1,4 @@
-# this one works fine most of the time but sometimes it'll crash 
+# this one works fine most of the time but sometimes it'll crash because of the error below:
 # ERROR: Attack time on 1st source is at or beyond end of 2nd.
 
 import random
