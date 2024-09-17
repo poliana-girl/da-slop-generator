@@ -8,7 +8,8 @@ import datetime
 
 import command
 
-from commands import blur_avrg, blur_blur, caltrain_caltrain, blur_chorus, blur_drunk, blur_noise, blur_scatter, blur_shuffle, blur_spread, blur_suppress, combine_cross
+from commands.blur import blur_avrg, blur_blur, caltrain_caltrain, blur_chorus, blur_drunk, blur_noise, blur_scatter, blur_shuffle, blur_spread, blur_suppress
+from commands.combine import combine_cross, combine_diff, combine_interleave, combine_max, combine_mean, specsphinx_specsphinx
 
 # example_parameter_list = [30, 90]
 # example_command = Command("example", 2, example_parameter_list)
@@ -36,7 +37,7 @@ def create_splits(directory):
             orig_left_channel_wav =  directory + original_channel_splits_directory_name + "/" + Path(file).stem + "_L.wav"
             orig_right_channel_wav = directory + original_channel_splits_directory_name + "/" + Path(file).stem + "_R.wav"
             if not os.path.isfile(orig_left_channel_wav) or not os.path.isfile(orig_left_channel_wav):
-                subprocess.check_call(['ffmpeg', '-i', directory + file, '-filter_complex', "[0:a]channelsplit=channel_layout=stereo[left][right]", '-map', "[left]", orig_left_channel_wav, '-map', "[right]", orig_right_channel_wav])
+                subprocess.check_call(['ffmpeg', '-i', directory + file, '-filter_complex', "[0:a]channelsplit=channel_layout=stereo[left][right]", '-map', "[left]", "-ar", "48000", orig_left_channel_wav, '-map', "[right]", "-ar", "48000", orig_right_channel_wav])
     
 def create_anas(directory):
     if not os.path.exists(directory + original_ana_directory_name):
@@ -152,7 +153,7 @@ def choose_function2():
 # consider taking out all the subprocess shit and just outputting all the commands into a bash script that u can run whenever
 # also it looks like the command format isn't ALWAYS command infile outfile param1 param2 sometimes there are 2 infiles.
 
-
+# NOTE: sounds must be .wav files
 # 0. split channels and create .ana files
 create_splits(directory)
 create_anas(directory)
@@ -164,7 +165,7 @@ for i in range(int(slops_to_generate)):
     # first we need to choose whether to perform a command on a single sound, or on two different sounds
     # 70% chance of single sound, 30% chance of two sounds
 
-    if random.random() < 0.7:
+    if False: # random.random() < 0.7:
         # SINGLE SOUND
         
         # 1. choose a file to use with a command
@@ -192,10 +193,10 @@ for i in range(int(slops_to_generate)):
         sound1, sound2 = choose_two_sounds(directory)
 
         # 2. choose a command
-        random_command = choose_function2()
+        # random_command = choose_function2()
 
         # uncomment to test out a certain command instead of a random one
-        # random_command = combine_cross.make_command()
+        random_command = specsphinx_specsphinx.make_command()
 
         # 3. execute that command
         exec = execute_command2(directory, sound1, sound2, random_command)

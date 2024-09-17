@@ -10,3 +10,5 @@
 commands/__pycache__
 *.pyc
 *.brk
+commands/__pycache__/*.pyc
+breakpoints
