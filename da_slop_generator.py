@@ -9,7 +9,7 @@ import datetime
 import command
 
 from commands.blur import blur_avrg, blur_blur, caltrain_caltrain, blur_chorus, blur_drunk, blur_noise, blur_scatter, blur_shuffle, blur_spread, blur_suppress
-from commands.combine import combine_cross, combine_diff, combine_interleave, combine_max, combine_mean, specsphinx_specsphinx
+from commands.combine import combine_cross, combine_diff, combine_interleave, combine_max, combine_mean, specsphinx_specsphinx, spectwin_spectwin, combine_sum
 
 # example_parameter_list = [30, 90]
 # example_command = Command("example", 2, example_parameter_list)
@@ -196,7 +196,7 @@ for i in range(int(slops_to_generate)):
         # random_command = choose_function2()
 
         # uncomment to test out a certain command instead of a random one
-        random_command = specsphinx_specsphinx.make_command()
+        random_command = combine_sum.make_command()
 
         # 3. execute that command
         exec = execute_command2(directory, sound1, sound2, random_command)
