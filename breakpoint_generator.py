@@ -2,7 +2,7 @@ import random
 import datetime
 
 def breakpoint_generator(low_bound, high_bound):
-    filename = "breakpoint_" + datetime.datetime.now().strftime("%I:%M:%S%p") + ".brk"
+    filename = "breakpoint_" + datetime.datetime.now().strftime("%I-%M-%S%p") + ".brk"
     file = open(filename, "x")
     
     time = 0

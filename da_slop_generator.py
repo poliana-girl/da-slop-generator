@@ -1,3 +1,6 @@
+# USAGE
+# python da_slop_generator DIRECTORY NUM_SLOPS
+
 import wave
 import sys
 import os
@@ -71,7 +74,7 @@ def execute_command(directory, sound, command):
     if not os.path.exists(directory + new_ana_directory_name):
         os.mkdir(directory + new_ana_directory_name)
 
-    current_time = datetime.datetime.now().strftime("%I:%M:%S%p") 
+    current_time = datetime.datetime.now().strftime("%I-%M-%S%p") 
     orig_ana_l = directory + original_ana_directory_name + "/" + Path(sound).stem + "_L.ana"
     new_ana_l = directory + new_ana_directory_name + "/" + Path(sound).stem + "_" + command.name.replace(" ", "_")  + "_" + current_time + "_L.ana"
     orig_ana_r = directory + original_ana_directory_name + "/" + Path(sound).stem + "_R.ana"
@@ -95,7 +98,7 @@ def execute_command2(directory, sound1, sound2, command):
     if not os.path.exists(directory + new_ana_directory_name):
         os.mkdir(directory + new_ana_directory_name)
 
-    current_time = datetime.datetime.now().strftime("%I:%M:%S%p") 
+    current_time = datetime.datetime.now().strftime("%I-%M-%S%p") 
     orig_ana_l1 = directory + original_ana_directory_name + "/" + Path(sound1).stem + "_L.ana"
     orig_ana_r1 = directory + original_ana_directory_name + "/" + Path(sound1).stem + "_R.ana"
 
