@@ -22,7 +22,7 @@ import breakpoint_generator
 def make_command():
     mode = 3
     parameter1 = random.uniform(1, 16)
-    parameter2 = 
+    parameter2 = 2
     parameter3 = random.uniform(1, 64)
     
     parameter_list = [parameter1, parameter2, parameter3] 
