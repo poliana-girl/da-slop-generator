@@ -1,4 +1,4 @@
-# THIS ONE DOESN'T WORK ON MY MACHINE FOR SOME REASON!! 
+# THIS ONE DOESN'T WORK ON MY MACHINE FOR SOME REASON!! like at all.. it just throws a memory error whenever you run it no matter what u do
 
 import random
 
