@@ -5,14 +5,14 @@ import os
 breakpoint_directory_name = "breakpoints"
 
 def breakpoint_generator(low_bound, high_bound):
-<<<<<<< HEAD
+
     filename = "breakpoint_" + datetime.datetime.now().strftime("%I-%M-%S%p") + ".brk"
-=======
+
     if not os.path.exists(breakpoint_directory_name):
         os.mkdir(breakpoint_directory_name)
     
     filename = breakpoint_directory_name + "/breakpoint_" + str(random.randint(10000000, 99999999)) + ".brk"
->>>>>>> 8062bddce358e95d639ebd9a12d1d0984acd133b
+
     file = open(filename, "x")
     
     time = 0
