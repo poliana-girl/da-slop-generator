@@ -35,10 +35,9 @@ slops_to_generate = int(sys.argv[2])
 # this folder is where the (channel-separated) input audio files are stored
 original_channel_splits_folder = directory + "orig_channel_splits"
 
-
 # TODO: ADD "directory +" to all of these and then go back and change every instance of "directory + XX_XX_directory_name" just to clean up the code
 # this folder is where the (channel-separated) audio analysis files (.ana files, created from the above) are stored
-original_ana_directory_name = "orig_ana"
+original_ana_folder = directory + "orig_ana"
 
 # this folder is where the (channel-separated) processed audio analysis files (.ana files, using the above as input) are stored (these are the products of the processing, which need to be converted back into .wav files for listening)
 new_ana_directory_name = "new_ana"
@@ -70,12 +69,12 @@ def create_splits(directory):
                 subprocess.check_call(['ffmpeg', '-i', directory + file, '-filter_complex', "[0:a]channelsplit=channel_layout=stereo[left][right]", '-map', "[left]", "-ar", "48000", orig_left_channel_wav, '-map', "[right]", "-ar", "48000", orig_right_channel_wav])
     
 def create_anas(directory):
-    mkdir_if_does_not_exist(directory + original_ana_directory_name)
+    mkdir_if_does_not_exist(original_ana_folder)
 
     for file in os.listdir(original_channel_splits_folder):
         orig_ana = Path(file).stem + ".ana"
-        if not os.path.isfile(directory + original_ana_directory_name + "/" + orig_ana):
-            subprocess.check_call(['pvoc', 'anal', '1', original_channel_splits_folder + "/" + file, directory + original_ana_directory_name + "/" + orig_ana])
+        if not os.path.isfile(original_ana_folder + "/" + orig_ana):
+            subprocess.check_call(['pvoc', 'anal', '1', original_channel_splits_folder + "/" + file, original_ana_folder + "/" + orig_ana])
 
 def choose_sound(directory):
     while True:
@@ -101,9 +100,9 @@ def execute_command(directory, sound, command):
     mkdir_if_does_not_exist(directory + new_ana_directory_name)
 
     current_time = datetime.datetime.now().strftime("%I-%M-%S%p") 
-    orig_ana_l = directory + original_ana_directory_name + "/" + Path(sound).stem + "_L.ana"
+    orig_ana_l = original_ana_folder + "/" + Path(sound).stem + "_L.ana"
     new_ana_l = directory + new_ana_directory_name + "/" + Path(sound).stem + "_" + command.name.replace(" ", "_")  + "_" + current_time + "_L.ana"
-    orig_ana_r = directory + original_ana_directory_name + "/" + Path(sound).stem + "_R.ana"
+    orig_ana_r = original_ana_folder + "/" + Path(sound).stem + "_R.ana"
     new_ana_r = directory + new_ana_directory_name + "/" + Path(sound).stem + "_" + command.name.replace(" ", "_")  + "_" + current_time + "_R.ana"
 
     command_split = command.name.split()
@@ -124,11 +123,11 @@ def execute_command2(directory, sound1, sound2, command):
     mkdir_if_does_not_exist(directory + new_ana_directory_name)
 
     current_time = datetime.datetime.now().strftime("%I-%M-%S%p") 
-    orig_ana_l1 = directory + original_ana_directory_name + "/" + Path(sound1).stem + "_L.ana"
-    orig_ana_r1 = directory + original_ana_directory_name + "/" + Path(sound1).stem + "_R.ana"
+    orig_ana_l1 = original_ana_folder + "/" + Path(sound1).stem + "_L.ana"
+    orig_ana_r1 = original_ana_folder + "/" + Path(sound1).stem + "_R.ana"
 
-    orig_ana_l2 = directory + original_ana_directory_name + "/" + Path(sound2).stem + "_L.ana"
-    orig_ana_r2 = directory + original_ana_directory_name + "/" + Path(sound2).stem + "_R.ana"
+    orig_ana_l2 = original_ana_folder + "/" + Path(sound2).stem + "_L.ana"
+    orig_ana_r2 = original_ana_folder + "/" + Path(sound2).stem + "_R.ana"
 
     new_ana_l = directory + new_ana_directory_name + "/" + Path(sound1).stem + Path(sound2).stem + "_" + command.name.replace(" ", "_")  + "_" + current_time + "_L.ana"
     new_ana_r = directory + new_ana_directory_name + "/" + Path(sound1).stem + Path(sound2).stem + "_" + command.name.replace(" ", "_")  + "_" + current_time + "_R.ana"
