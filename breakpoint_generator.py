@@ -1,12 +1,14 @@
 import random
-import datetime
 import os
+
+from date_time_format import get_formatted_date_time
 
 breakpoint_directory_name = "breakpoints"
 
 def breakpoint_generator(low_bound, high_bound):
 
-    filename = "breakpoint_" + datetime.datetime.now().strftime("%I-%M-%S%p") + ".brk"
+    current_time = get_formatted_date_time()
+    filename = "breakpoint_" + current_time + ".brk"
 
     if not os.path.exists(breakpoint_directory_name):
         os.mkdir(breakpoint_directory_name)

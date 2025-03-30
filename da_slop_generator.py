@@ -7,10 +7,10 @@ import os
 import subprocess
 from pathlib import Path
 import random
-import datetime
 
 import command
 
+from date_time_format import get_formatted_date_time
 
 # find a good way to differentiate between the ones that take 1 audio file and the ones that take 2. right now the only ones that take 2 are all the combines and formants vocode
 from commands.blur import blur_avrg, blur_blur, caltrain_caltrain, blur_chorus, blur_drunk, blur_noise, blur_scatter, blur_shuffle, blur_spread, blur_suppress
@@ -28,6 +28,9 @@ from commands.hilite import hilite_bltr, glisten_glisten
 
 # the first argument is a directory of input audio files.
 directory = sys.argv[1]
+# QoL thing just in case you forgot to add a slash to the end of the directory
+if directory[-1] != "/":
+    directory = directory + "/"
 
 # the second argument is how many "slops" to generate, aka how many output audio files to generate
 slops_to_generate = int(sys.argv[2])
@@ -40,34 +43,44 @@ original_channel_splits_folder = directory + "orig_channel_splits"
 original_ana_folder = directory + "orig_ana"
 
 # this folder is where the (channel-separated) processed audio analysis files (.ana files, using the above as input) are stored (these are the products of the processing, which need to be converted back into .wav files for listening)
-new_ana_folder = "new_ana"
+new_ana_folder = directory + "new_ana"
 
 # this folder is where the (channel-separated) processed audio analysis files (converted .ana -> wav from the above) are stored
-new_wav_directory_name = "new_wav"
+new_wav_folder = directory + "new_wav"
 
 # this folder is where the (NON-channel-separated, properly merged) finished "slops"/output files are stored
-merged_wav_directory_name = "FINISHED"
+finished_folder = directory + "FINISHED"
 
+# creates a directory if it doesn't exist already
 def mkdir_if_does_not_exist(path):
     if not os.path.exists(path): 
         os.mkdir(path)
 
+# checks if a file is an audio file based on its extension. this can be adjusted to easily allow other formats of audio to be processed. anything you put here needs to be handleable by ffmpeg
 def is_audio_input_file(file):
     if file.endswith('.wav') or file.endswith('.mp3') or file.endswith('.flac') or file.endswith('.m4a') or file.endswith('.ogg') or file.endswith('.aiff') or file.endswith('.opus'):
         return True
     else:
         return False
 
+# splits each audio input file into 2 channels in wav format. it does not check whether a file is mono or not, so it does twice the work it needs to if a file is mono, but i'd have to change a lot of shit to make it work otherwise so i think it's fine for now
 def create_splits(directory):
     mkdir_if_does_not_exist(original_channel_splits_folder)
 
     for file in os.listdir(directory):
         if is_audio_input_file(file):
-            orig_left_channel_wav =  original_channel_splits_folder  + "/" + Path(file).stem + "_L.wav"
-            orig_right_channel_wav = original_channel_splits_folder  + "/" + Path(file).stem + "_R.wav"
-            if not os.path.isfile(orig_left_channel_wav) or not os.path.isfile(orig_right_channel_wav):
-                subprocess.check_call(['ffmpeg', '-i', directory + file, '-filter_complex', "[0:a]channelsplit=channel_layout=stereo[left][right]", '-map', "[left]", "-ar", "48000", orig_left_channel_wav, '-map', "[right]", "-ar", "48000", orig_right_channel_wav])
-    
+            # split wavs file path (without extension or L/R markers, just to save some code duplication)
+            split_wav_path = original_channel_splits_folder  + "/" + Path(file).stem
+
+            split_wav_l = split_wav_path + "_L.wav"
+            split_wav_r = split_wav_path + "_R.wav"
+
+            if not os.path.isfile(split_wav_l) or not os.path.isfile(split_wav_r):
+                # full ffmpeg command:
+                # ffmpeg -i CHOSEN_FILE -filter_complex "[0:a]channelsplit=channel_layout=stereo[left][right]" -map [left] -ar 48000 -y SPLIT_WAV_L -map [right] -ar 48000 -y SPLIT_WAV_R
+                subprocess.check_call(['ffmpeg', '-i', directory + file, '-filter_complex', "[0:a]channelsplit=channel_layout=stereo[left][right]", '-map', "[left]", "-ar", "48000", "-y", split_wav_l, '-map', "[right]", "-ar", "48000", "-y", split_wav_r])
+
+# creates CDP analysis files (.ana) for each channel split (though it should be noted that this function is not explicitly AWARE of the relationship between channel splits. it just creates .ana files for all the files in the channel split folder)
 def create_anas(directory):
     mkdir_if_does_not_exist(original_ana_folder)
 
@@ -76,6 +89,7 @@ def create_anas(directory):
         if not os.path.isfile(original_ana_folder + "/" + orig_ana):
             subprocess.check_call(['pvoc', 'anal', '1', original_channel_splits_folder + "/" + file, original_ana_folder + "/" + orig_ana])
 
+# chooses a random audio input file from the given directory
 def choose_sound(directory):
     while True:
         choice = random.choice(os.listdir(directory))
@@ -84,6 +98,7 @@ def choose_sound(directory):
         else:
             continue
 
+# chooses twp random audio input file from the given directory (and verifies they are not the same file)
 def choose_two_sounds(directory):
         while True:
             choice1 = random.choice(os.listdir(directory))
@@ -93,80 +108,109 @@ def choose_two_sounds(directory):
                     return choice1, choice2
             else:
                 continue
+# this one exists because the audio input file is passed into the "execute command" functions (rather than passing both the left and right split .ana files into the function separately). this function simply reconstructs the file path and names of each split .ana file and returns them both 
+def get_orig_ana_channel_splits_from_input_audio_file(sound):
+    # this is the path to the ana files without "_L" or "_R" or an extension, to save some code duplication
+    orig_ana_no_ext = original_ana_folder + "/" + Path(sound).stem
     
+    orig_ana_l = orig_ana_no_ext + "_L.ana"
+    orig_ana_r = orig_ana_no_ext + "_R.ana"
+    return orig_ana_l, orig_ana_r
 
-def execute_command(directory, sound, command):
-    # final = [command.name, Path(directory + sound).stem + "_L.ana", Path(directory + sound).stem + command.name.replace(" ", "_") + "_L.ana"]
-    mkdir_if_does_not_exist(directory + new_ana_directory_name)
+# exists for similar reasons as the above function, but for creating the path of the (not yet) PROCESSED .ana files instead. it's the filename passed into the command to make the new analysis file
+# the command has to be passed into this one because the command's name becomes part of the final file name
+def get_new_ana_channel_splits_from_input_audio_file(sound, command):
+    # current time is used in file name to prevent overwriting other .ana files created from the same input audio files and processing method, but with different parameters
+    current_time = get_formatted_date_time()
 
-    current_time = datetime.datetime.now().strftime("%I-%M-%S%p") 
-    orig_ana_l = original_ana_folder + "/" + Path(sound).stem + "_L.ana"
-    new_ana_l = new_ana_folder + "/" + Path(sound).stem + "_" + command.name.replace(" ", "_")  + "_" + current_time + "_L.ana"
-    orig_ana_r = original_ana_folder + "/" + Path(sound).stem + "_R.ana"
-    new_ana_r = new_ana_folder + "/" + Path(sound).stem + "_" + command.name.replace(" ", "_")  + "_" + current_time + "_R.ana"
+    # this is the path to the PROCESSED ana files without "_L" or "_R" or an extension, to save some code duplication. it also removes any spacesjust to keep things simple down the line
+    new_ana_no_ext = new_ana_folder + "/" + Path(sound).stem + command.name.replace(" ", "") + current_time
+    
+    new_ana_l = new_ana_no_ext + "_L.ana"
+    new_ana_r = new_ana_no_ext + "_R.ana"
+    return new_ana_l, new_ana_r
 
+# helper function for formatting commands properly in an array
+def command_formatting_helper(command, ana_sequence_l, ana_sequence_r):
     command_split = command.name.split()
-    command_l = command_split + [orig_ana_l, new_ana_l]
-    command_r = command_split + [orig_ana_r, new_ana_r]
-
+    command_l = command_split + ana_sequence_l
+    command_r = command_split + ana_sequence_r
     for i in range(command.number_of_parameters):
         command_l.append(str(command.parameter_list[i]))
         command_r.append(str(command.parameter_list[i]))
+    return command_l, command_r
 
+# execute CDP program command type 1 (works on .ana files, takes 1 input analysis file, outputs 1 analysis file)
+def execute_command_1(sound, command):
+    mkdir_if_does_not_exist(new_ana_folder)
+
+    # get names/paths to original channel split .anas
+    orig_ana_l, orig_ana_r = get_orig_ana_channel_splits_from_input_audio_file(sound)
+
+    # create names/paths for PROCESSED channel split .anas
+    new_ana_l,  new_ana_r  = get_new_ana_channel_splits_from_input_audio_file(sound, command)
+
+    # some shit i need to do in order to have the command's arguments split up, with each becoming a value in an array (which is how you have to input commands into subprocess.check_call)
+    ana_sequence_l = [orig_ana_l, new_ana_l]
+    ana_sequence_r = [orig_ana_r, new_ana_r]
+    command_l, command_r = command_formatting_helper(command, ana_sequence_l, ana_sequence_r)
+
+    # execute/run both commands for each channel
     subprocess.check_call(command_l)
     subprocess.check_call(command_r)
 
     return new_ana_l, new_ana_r
 
-def execute_command2(directory, sound1, sound2, command):
-    # final = [command.name, Path(directory + sound).stem + "_L.ana", Path(directory + sound).stem + command.name.replace(" ", "_") + "_L.ana"]
-    mkdir_if_does_not_exist(directory + new_ana_directory_name)
+# execute CDP program command type 2 (works on .ana files, takes 2 input analysis files, outputs 1 analysis file)
+def execute_command_2(directory, sound1, sound2, command):
+    mkdir_if_does_not_exist(new_ana_folder)
 
-    current_time = datetime.datetime.now().strftime("%I-%M-%S%p") 
-    orig_ana_l1 = original_ana_folder + "/" + Path(sound1).stem + "_L.ana"
-    orig_ana_r1 = original_ana_folder + "/" + Path(sound1).stem + "_R.ana"
+    # get names/paths to original channel split .anas of the first sound
+    orig_ana_l1, orig_ana_r1 = get_orig_ana_channel_splits_from_input_audio_file(sound1)
+    # get names/paths to original channel split .anas of the second sound
+    orig_ana_l2, orig_ana_r2 = get_orig_ana_channel_splits_from_input_audio_file(sound2)
 
-    orig_ana_l2 = original_ana_folder + "/" + Path(sound2).stem + "_L.ana"
-    orig_ana_r2 = original_ana_folder + "/" + Path(sound2).stem + "_R.ana"
+    # create combined name of both input files (used for the final file name, because there's 2 sets of input .ana's and only 1 set of output .ana)
+    combined_sound_name = Path(sound1).stem + Path(sound2).stem
+    # create names/paths for PROCESSED channel split .anas
+    new_ana_l, new_ana_r = get_new_ana_channel_splits_from_input_audio_file(combined_sound_name, command)
 
-    new_ana_l = new_ana_folder + "/" + Path(sound1).stem + Path(sound2).stem + "_" + command.name.replace(" ", "_")  + "_" + current_time + "_L.ana"
-    new_ana_r = new_ana_folder + "/" + Path(sound1).stem + Path(sound2).stem + "_" + command.name.replace(" ", "_")  + "_" + current_time + "_R.ana"
+    # some shit i need to do in order to have the command's arguments split up, with each becoming a value in an array (which is how you have to input commands into subprocess.check_call)
+    ana_sequence_l = [orig_ana_l1, orig_ana_l2, new_ana_l]
+    ana_sequence_r = [orig_ana_r1, orig_ana_r2, new_ana_r]
+    command_l, command_r = command_formatting_helper(command, ana_sequence_l, ana_sequence_r)
 
-    command_split = command.name.split()
-    command_l = command_split + [orig_ana_l1, orig_ana_l2, new_ana_l]
-    command_r = command_split + [orig_ana_r1, orig_ana_r2, new_ana_r]
-
-    for i in range(command.number_of_parameters):
-        command_l.append(str(command.parameter_list[i]))
-        command_r.append(str(command.parameter_list[i]))
-
+    # execute/run both commands for each channel
     subprocess.check_call(command_l)
     subprocess.check_call(command_r)
 
     return new_ana_l, new_ana_r
 
+# from newly processed .ana files, synthesize them into (channel-split) wav files
+def synth(new_ana_l, new_ana_r):
+    mkdir_if_does_not_exist(new_wav_folder)
 
-def synth(left_channel, right_channel):
-    if not os.path.exists(directory + new_wav_directory_name):
-        os.mkdir(directory + new_wav_directory_name)
-    new_wav_l = directory + new_wav_directory_name + "/" + Path(left_channel).stem + ".wav"
-    new_wav_r = directory + new_wav_directory_name + "/" + Path(right_channel).stem + ".wav"
-    subprocess.check_call(['pvoc', 'synth', left_channel, new_wav_l])
-    subprocess.check_call(['pvoc', 'synth', right_channel, new_wav_r])
+    # names of wav files to be created 
+    new_wav_l = new_wav_folder + "/" + Path(new_ana_l).stem + ".wav"
+    new_wav_r = new_wav_folder + "/" + Path(new_ana_r).stem + ".wav"
+
+    # format and execute pvoc synth command
+    subprocess.check_call(['pvoc', 'synth', new_ana_l, new_wav_l])
+    subprocess.check_call(['pvoc', 'synth', new_ana_r, new_wav_r])
     return new_wav_l, new_wav_r
 
-def merge(left_channel, right_channel):
-    if not os.path.exists(directory + merged_wav_directory_name):
-        os.mkdir(directory + merged_wav_directory_name)
+# finally, after all we've been through, merge the two synthesized wav files back into one wav file with 2 channels
+def merge(new_wav_l, new_wav_r):
+    mkdir_if_does_not_exist(finished_folder)
     
-    finished_sound_name = Path(left_channel).stem[:-2].replace(" ", "") + ".wav"
+    finished_sound_name = Path(new_wav_l).stem[:-2].replace(" ", "") + ".wav"
 
-    # original command:
+    # full ffmpeg command:
     # ffmpeg -i left.wav -i right.wav -filter_complex "[0:a][1:a]join=inputs=2:channel_layout=stereo[a]" -map "[a]" output.wav
-    subprocess.check_call(['ffmpeg', '-i', left_channel, '-i', right_channel, '-filter_complex', "[0:a][1:a]join=inputs=2:channel_layout=stereo[a]", '-map', "[a]", directory + merged_wav_directory_name + "/" + finished_sound_name])
+    subprocess.check_call(['ffmpeg', '-i', new_wav_l, '-i', new_wav_r, '-filter_complex', "[0:a][1:a]join=inputs=2:channel_layout=stereo[a]", '-map', "[a]", finished_folder + "/" + finished_sound_name])
 
-# picks an effect out of the ones that take 1 input audio file
-def choose_function():
+# choose type 1 command
+def choose_command_1():
     function_list = [
         blur_avrg.make_command, blur_blur.make_command, caltrain_caltrain.make_command, blur_chorus.make_command, blur_drunk.make_command, blur_noise.make_command, blur_scatter.make_command, blur_shuffle.make_command, blur_spread.make_command, blur_suppress.make_command,
         superaccu_superaccu.make_command, focus_exag.make_command, focus_focus.make_command, focus_fold.make_command, focus_freeze.make_command, focus_step.make_command, specfold_specfold.make_command,
@@ -174,26 +218,20 @@ def choose_function():
     ]
     return random.choice(function_list)()
 
-# picks an effect out of the ones that take 2 input audio files
-def choose_function2():
+# choose type 2 command
+def choose_command_2():
     function_list = [
         combine_cross.make_command, combine_diff.make_command, combine_interleave.make_command, combine_max.make_command, combine_mean.make_command, specsphinx_specsphinx.make_command, spectwin_spectwin.make_command, combine_sum.make_command,
         formants_vocode.make_command
     ]
     return random.choice(function_list)()
 
+# MAIN PROGRAM STEPS
 
-# TODO: 
-# make more command types; will probably need some trial and error on my part to find out what values u can shove into a command
-# consider taking out all the subprocess shit and just outputting all the commands into a bash script that u can run whenever
-# also it looks like the command format isn't ALWAYS command infile outfile param1 param2 sometimes there are 2 infiles.
-
-# NOTE: sounds must be .wav files
-# 0. split channels and create .ana files
+# 0. create split channels and create .ana files
 create_splits(directory)
 create_anas(directory)
 
-# MAIN LOOP
 for i in range(slops_to_generate):
 
     # FORK IN THE ROAD
@@ -208,14 +246,14 @@ for i in range(slops_to_generate):
         sound = choose_sound(directory)
 
         # 2. choose a random command (comment this out when testing a certain command)
-        random_command = choose_function()
+        random_command = choose_command_1()
         print(random_command)
 
         # uncomment to test out a certain command instead of a random one
         # random_command = xxx.make_command()
 
         # 3. execute that command
-        test = execute_command(directory, sound, random_command)
+        test = execute_command_1(sound, random_command)
 
         # 4. convert resulting .ana files into .wav files for each channel
         test2 = synth(test[0], test[1])
@@ -230,13 +268,13 @@ for i in range(slops_to_generate):
         sound1, sound2 = choose_two_sounds(directory)
 
         # 2. choose a command
-        random_command = choose_function2()
+        random_command = choose_command_2()
 
         # uncomment to test out a certain command instead of a random one
         # random_command = formants_vocode.make_command()
 
         # 3. execute that command
-        exec = execute_command2(directory, sound1, sound2, random_command)
+        exec = execute_command_2(directory, sound1, sound2, random_command)
 
         # 4. convert resulting .ana files into .wav files for each channel
         test2 = synth(exec[0], exec[1])
