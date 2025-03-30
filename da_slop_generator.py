@@ -40,7 +40,7 @@ original_channel_splits_folder = directory + "orig_channel_splits"
 original_ana_folder = directory + "orig_ana"
 
 # this folder is where the (channel-separated) processed audio analysis files (.ana files, using the above as input) are stored (these are the products of the processing, which need to be converted back into .wav files for listening)
-new_ana_directory_name = "new_ana"
+new_ana_folder = "new_ana"
 
 # this folder is where the (channel-separated) processed audio analysis files (converted .ana -> wav from the above) are stored
 new_wav_directory_name = "new_wav"
@@ -101,9 +101,9 @@ def execute_command(directory, sound, command):
 
     current_time = datetime.datetime.now().strftime("%I-%M-%S%p") 
     orig_ana_l = original_ana_folder + "/" + Path(sound).stem + "_L.ana"
-    new_ana_l = directory + new_ana_directory_name + "/" + Path(sound).stem + "_" + command.name.replace(" ", "_")  + "_" + current_time + "_L.ana"
+    new_ana_l = new_ana_folder + "/" + Path(sound).stem + "_" + command.name.replace(" ", "_")  + "_" + current_time + "_L.ana"
     orig_ana_r = original_ana_folder + "/" + Path(sound).stem + "_R.ana"
-    new_ana_r = directory + new_ana_directory_name + "/" + Path(sound).stem + "_" + command.name.replace(" ", "_")  + "_" + current_time + "_R.ana"
+    new_ana_r = new_ana_folder + "/" + Path(sound).stem + "_" + command.name.replace(" ", "_")  + "_" + current_time + "_R.ana"
 
     command_split = command.name.split()
     command_l = command_split + [orig_ana_l, new_ana_l]
@@ -129,8 +129,8 @@ def execute_command2(directory, sound1, sound2, command):
     orig_ana_l2 = original_ana_folder + "/" + Path(sound2).stem + "_L.ana"
     orig_ana_r2 = original_ana_folder + "/" + Path(sound2).stem + "_R.ana"
 
-    new_ana_l = directory + new_ana_directory_name + "/" + Path(sound1).stem + Path(sound2).stem + "_" + command.name.replace(" ", "_")  + "_" + current_time + "_L.ana"
-    new_ana_r = directory + new_ana_directory_name + "/" + Path(sound1).stem + Path(sound2).stem + "_" + command.name.replace(" ", "_")  + "_" + current_time + "_R.ana"
+    new_ana_l = new_ana_folder + "/" + Path(sound1).stem + Path(sound2).stem + "_" + command.name.replace(" ", "_")  + "_" + current_time + "_L.ana"
+    new_ana_r = new_ana_folder + "/" + Path(sound1).stem + Path(sound2).stem + "_" + command.name.replace(" ", "_")  + "_" + current_time + "_R.ana"
 
     command_split = command.name.split()
     command_l = command_split + [orig_ana_l1, orig_ana_l2, new_ana_l]
