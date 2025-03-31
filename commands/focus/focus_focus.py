@@ -1,6 +1,6 @@
 import random
 
-from command import Command
+from command import Command, BreakpointInfo
 import breakpoint_generator
 
 #  Usage
@@ -30,8 +30,9 @@ def make_command():
         parameter1 = "-p" + str(random.uniform(1,12))
 
     parameter2 = random.uniform(1, 16)
-    parameter3 = breakpoint_generator.breakpoint_generator(0.1, 10)
+    # breakpoint parameter
+    parameter3 = "" # breakpoint_generator.breakpoint_generator(0.1, 10)
     parameter4 = "-s" + str(random.uniform(2,4097))
     
     parameter_list = [parameter1, parameter2, parameter3]
-    return Command("focus focus", 3, parameter_list)
+    return Command("focus focus", 3, parameter_list, BreakpointInfo(2, 0.1, 10))

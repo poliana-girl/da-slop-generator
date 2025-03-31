@@ -1,6 +1,6 @@
 import random
 
-from command import Command
+from command import Command, BreakpointInfo
 import breakpoint_generator
 
 # blur spread infile outfile -fN | -pN -i [-sspread]
@@ -19,9 +19,9 @@ def make_command():
         parameter_list = [parameter1]
         return Command("blur spread", 1, parameter_list)
     else:
-        # print("-p mode")
         parameter1 = "-p" + str(random.uniform(1,12))
-        parameter2 = "-s" + breakpoint_generator.breakpoint_generator(0, 1)
+        # breakpoint parameter
+        parameter2 = "-s"
         parameter_list = [parameter1, parameter2]
-        return Command("blur spread", 2, parameter_list)
+        return Command("blur spread", 2, parameter_list, BreakpointInfo(1, 0, 1))
     

@@ -1,6 +1,6 @@
 import random
 
-from command import Command
+from command import Command, BreakpointInfo
 import breakpoint_generator
 
 # infile – input analysis file made with PVOC
@@ -10,6 +10,7 @@ import breakpoint_generator
 # NOISE MAY VARY OVER TIME
 
 def make_command():
-    parameter1 = breakpoint_generator.breakpoint_generator(0, 1)
+    # breakpoint parameter
+    parameter1 = ""
     parameter_list = [parameter1]
-    return Command("blur noise", 1, parameter_list)
+    return Command("blur noise", 1, parameter_list, BreakpointInfo(0, 0, 1))

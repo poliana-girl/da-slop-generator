@@ -1,6 +1,6 @@
 import random
 
-from command import Command
+from command import Command, BreakpointInfo
 import breakpoint_generator
 
 #  Usage
@@ -13,6 +13,6 @@ import breakpoint_generator
 #     -a retain any subzero amplitudes produced (Default: set these to zero) 
 
 def make_command():
-    parameter1 = "-c" + breakpoint_generator.breakpoint_generator(0, 1)
+    parameter1 = "-c" # + breakpoint_generator.breakpoint_generator(0, 1)
     parameter_list = [parameter1]
-    return Command("combine diff", 1, parameter_list)
+    return Command("combine diff", 1, parameter_list, BreakpointInfo(0, 0, 1))

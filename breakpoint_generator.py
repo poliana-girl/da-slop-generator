@@ -5,7 +5,7 @@ from date_time_format import get_formatted_date_time
 
 breakpoint_directory_name = "breakpoints"
 
-def breakpoint_generator(low_bound, high_bound):
+def breakpoint_generator(low_bound, high_bound, sound_length):
 
     current_time = get_formatted_date_time()
     filename = "breakpoint_" + current_time + ".brk"
@@ -17,14 +17,32 @@ def breakpoint_generator(low_bound, high_bound):
 
     file = open(filename, "x")
     
-    time = 0
-    for i in range(20):
-        time = time + random.randint(1, 60)
+    # time = 0
+    # for i in range(20):
+    #     time = time + random.randint(1, 60)
+    #     value = random.uniform(low_bound, high_bound)
+    #     file.write(str(time))
+    #     file.write(" ")
+    #     file.write(str(value))
+    #     file.write("\n")
+    
+    number_of_values = random.randint(1, 100)
+
+    # generate number_of values # of random times inside range of the sound's length
+    times = []
+    for i in range(number_of_values):
+        time = random.uniform(0, sound_length)
+        times.append(time)
+
+    times.sort()
+
+    for i in range(number_of_values):
+        time = 0 
         value = random.uniform(low_bound, high_bound)
-        file.write(str(time))
+        file.write(str(times[i]))
         file.write(" ")
         file.write(str(value))
         file.write("\n")
-    
+
     file.close()
     return filename

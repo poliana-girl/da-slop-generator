@@ -12,5 +12,5 @@ commands/__pycache__
 *.brk
 commands/__pycache__/*.pyc
 breakpoints
-*.txt
-ff_datafiles
+/f_datafiles
+/myenv

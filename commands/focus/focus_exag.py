@@ -1,6 +1,6 @@
 import random
 
-from command import Command
+from command import Command, BreakpointInfo
 import breakpoint_generator
 
 #  Usage
@@ -15,10 +15,10 @@ import breakpoint_generator
 #         exaggeration may vary over time 
 
 def make_command():
-    if random.random() < 0.5:
-        parameter1 = breakpoint_generator.breakpoint_generator(0.001, 1)
-    else:
-        parameter1 = breakpoint_generator.breakpoint_generator(1, 1000)
-    
+    parameter1 = ""
     parameter_list = [parameter1]
-    return Command("focus exag", 1, parameter_list)
+    
+    if random.random() < 0.5:
+        return Command("focus exag", 1, parameter_list, BreakpointInfo(0, 0.001, 1))
+    else:
+        return Command("focus exag", 1, parameter_list, BreakpointInfo(0, 1, 1000))

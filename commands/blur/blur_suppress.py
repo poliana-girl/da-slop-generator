@@ -1,6 +1,6 @@
 import random
 
-from command import Command
+from command import Command, BreakpointInfo
 import breakpoint_generator
 
 # blur suppress infile outfile N
@@ -10,6 +10,7 @@ import breakpoint_generator
 #         N may vary over time
 
 def make_command():
-    parameter1 = breakpoint_generator.breakpoint_generator(1, 100)
+    # breakpoint parameter
+    parameter1 = ""
     parameter_list = [parameter1]
-    return Command("blur suppress", 1, parameter_list)
+    return Command("blur suppress", 1, parameter_list, BreakpointInfo(0, 1, 100))

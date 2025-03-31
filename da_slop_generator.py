@@ -7,10 +7,12 @@ import os
 import subprocess
 from pathlib import Path
 import random
+import soundfile as sf
 
 import command
 
 from date_time_format import get_formatted_date_time
+import breakpoint_generator
 
 # find a good way to differentiate between the ones that take 1 audio file and the ones that take 2. right now the only ones that take 2 are all the combines and formants vocode
 from commands.blur import blur_avrg, blur_blur, caltrain_caltrain, blur_chorus, blur_drunk, blur_noise, blur_scatter, blur_shuffle, blur_spread, blur_suppress
@@ -108,6 +110,7 @@ def choose_two_sounds(directory):
                     return choice1, choice2
             else:
                 continue
+
 # this one exists because the audio input file is passed into the "execute command" functions (rather than passing both the left and right split .ana files into the function separately). this function simply reconstructs the file path and names of each split .ana file and returns them both 
 def get_orig_ana_channel_splits_from_input_audio_file(sound):
     # this is the path to the ana files without "_L" or "_R" or an extension, to save some code duplication
@@ -226,6 +229,13 @@ def choose_command_2():
     ]
     return random.choice(function_list)()
 
+def add_breakpoints(sound, command):
+    if hasattr(random_command, "breakpoint_info"):
+        # print(get_orig_wav_length(sound))
+        sf_wav = sf.SoundFile(original_channel_splits_folder  + "/" + Path(sound).stem + "_L.wav")
+        sound_length = sf_wav.frames / sf_wav.samplerate
+        command.parameter_list[command.breakpoint_info.parameter_index] = command.parameter_list[command.breakpoint_info.parameter_index] + breakpoint_generator.breakpoint_generator(command.breakpoint_info.lower_bound, command.breakpoint_info.upper_bound, sound_length)
+
 # MAIN PROGRAM STEPS
 
 # 0. create split channels and create .ana files
@@ -239,18 +249,21 @@ for i in range(slops_to_generate):
     # 70% chance of single sound, 30% chance of two sounds
 
     # set value to True to only test single sounds. set to False to only test two different sounds
-    if random.random() < 0.7:
+    if True: # random.random() < 0.7:
         # SINGLE SOUND
         
         # 1. choose a file to use with a command
         sound = choose_sound(directory)
 
         # 2. choose a random command (comment this out when testing a certain command)
-        random_command = choose_command_1()
-        print(random_command)
+        # random_command = choose_command_1()
+        # print(random_command)
 
         # uncomment to test out a certain command instead of a random one
-        # random_command = xxx.make_command()
+        random_command = focus_focus.make_command()
+
+        # 2.5 add breakpoints
+        add_breakpoints(sound, random_command)
 
         # 3. execute that command
         test = execute_command_1(sound, random_command)
@@ -260,6 +273,7 @@ for i in range(slops_to_generate):
 
         # 5. merge .wav files together into the final product
         merge(test2[0], test2[1])
+        print(random_command)
     
     else:
         # TWO DIFFERENT SOUNDS
@@ -268,10 +282,18 @@ for i in range(slops_to_generate):
         sound1, sound2 = choose_two_sounds(directory)
 
         # 2. choose a command
-        random_command = choose_command_2()
+        # random_command = choose_command_2()
 
         # uncomment to test out a certain command instead of a random one
-        # random_command = formants_vocode.make_command()
+        random_command = combine_diff.make_command()
+
+        # 2.5 add breakpoints
+        print("go   ")
+        if random_command.breakpoint_info is not None:
+            print("gottem")
+            sf_wav = sf.SoundFile(original_channel_splits_folder  + "/" + Path(sound1).stem + "_L.wav")
+            sound_length = sf_wav.frames / sf_wav.samplerate
+            random_command.parameter_list[0] = random_command.parameter_list[0] + breakpoint_generator.breakpoint_generator(random_command.breakpoint_info.lower_bound, random_command.breakpoint_info.upper_bound, sound_length)
 
         # 3. execute that command
         exec = execute_command_2(directory, sound1, sound2, random_command)
