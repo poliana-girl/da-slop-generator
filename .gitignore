@@ -14,3 +14,4 @@ commands/__pycache__/*.pyc
 breakpoints
 *.txt
 ff_datafiles
+/myenv
