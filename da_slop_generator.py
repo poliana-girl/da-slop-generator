@@ -10,14 +10,14 @@ import random
 
 import command
 
-from date_time_format import get_formatted_date_time
+import utilities
 
 # find a good way to differentiate between the ones that take 1 audio file and the ones that take 2. right now the only ones that take 2 are all the combines and formants vocode
 from commands.blur import blur_avrg, blur_blur, caltrain_caltrain, blur_chorus, blur_drunk, blur_noise, blur_scatter, blur_shuffle, blur_spread, blur_suppress
 from commands.combine import combine_cross, combine_diff, combine_interleave, combine_max, combine_mean, specsphinx_specsphinx, spectwin_spectwin, combine_sum
 from commands.focus import superaccu_superaccu, focus_exag, focus_focus, focus_fold, focus_freeze, focus_step, specfold_specfold
 from commands.formants import formants_vocode
-from commands.hilite import hilite_bltr, glisten_glisten
+from commands.hilite import hilite_bltr, glisten_glisten, hilite_filter, hilite_pluck
 
 # example_parameter_list = [30, 90]
 # example_command = Command("example", 2, example_parameter_list)
@@ -27,10 +27,7 @@ from commands.hilite import hilite_bltr, glisten_glisten
 # print(example_command2)
 
 # the first argument is a directory of input audio files.
-directory = sys.argv[1]
-# QoL thing just in case you forgot to add a slash to the end of the directory
-if directory[-1] != "/":
-    directory = directory + "/"
+directory = utilities.format_directory(sys.argv[1])
 
 # the second argument is how many "slops" to generate, aka how many output audio files to generate
 slops_to_generate = int(sys.argv[2])
@@ -51,24 +48,12 @@ new_wav_folder = directory + "new_wav"
 # this folder is where the (NON-channel-separated, properly merged) finished "slops"/output files are stored
 finished_folder = directory + "FINISHED"
 
-# creates a directory if it doesn't exist already
-def mkdir_if_does_not_exist(path):
-    if not os.path.exists(path): 
-        os.mkdir(path)
-
-# checks if a file is an audio file based on its extension. this can be adjusted to easily allow other formats of audio to be processed. anything you put here needs to be handleable by ffmpeg
-def is_audio_input_file(file):
-    if file.endswith('.wav') or file.endswith('.mp3') or file.endswith('.flac') or file.endswith('.m4a') or file.endswith('.ogg') or file.endswith('.aiff') or file.endswith('.opus'):
-        return True
-    else:
-        return False
-
 # splits each audio input file into 2 channels in wav format. it does not check whether a file is mono or not, so it does twice the work it needs to if a file is mono, but i'd have to change a lot of shit to make it work otherwise so i think it's fine for now
 def create_splits(directory):
-    mkdir_if_does_not_exist(original_channel_splits_folder)
+    utilities.mkdir_if_does_not_exist(original_channel_splits_folder)
 
     for file in os.listdir(directory):
-        if is_audio_input_file(file):
+        if utilities.is_audio_input_file(file):
             # split wavs file path (without extension or L/R markers, just to save some code duplication)
             split_wav_path = original_channel_splits_folder  + "/" + Path(file).stem
 
@@ -82,29 +67,20 @@ def create_splits(directory):
 
 # creates CDP analysis files (.ana) for each channel split (though it should be noted that this function is not explicitly AWARE of the relationship between channel splits. it just creates .ana files for all the files in the channel split folder)
 def create_anas(directory):
-    mkdir_if_does_not_exist(original_ana_folder)
+    utilities.mkdir_if_does_not_exist(original_ana_folder)
 
     for file in os.listdir(original_channel_splits_folder):
         orig_ana = Path(file).stem + ".ana"
         if not os.path.isfile(original_ana_folder + "/" + orig_ana):
             subprocess.check_call(['pvoc', 'anal', '1', original_channel_splits_folder + "/" + file, original_ana_folder + "/" + orig_ana])
 
-# chooses a random audio input file from the given directory
-def choose_sound(directory):
-    while True:
-        choice = random.choice(os.listdir(directory))
-        if is_audio_input_file(choice):
-            return choice
-        else:
-            continue
-
 # chooses twp random audio input file from the given directory (and verifies they are not the same file)
 def choose_two_sounds(directory):
         while True:
             choice1 = random.choice(os.listdir(directory))
-            if is_audio_input_file(choice1):
+            if utilities.is_audio_input_file(choice1):
                 choice2 = random.choice(os.listdir(directory))
-                if choice1 != choice2 and is_audio_input_file(choice2):
+                if choice1 != choice2 and utilities.is_audio_input_file(choice2):
                     return choice1, choice2
             else:
                 continue
@@ -121,7 +97,7 @@ def get_orig_ana_channel_splits_from_input_audio_file(sound):
 # the command has to be passed into this one because the command's name becomes part of the final file name
 def get_new_ana_channel_splits_from_input_audio_file(sound, command):
     # current time is used in file name to prevent overwriting other .ana files created from the same input audio files and processing method, but with different parameters
-    current_time = get_formatted_date_time()
+    current_time = utilities.get_formatted_date_time()
 
     # this is the path to the PROCESSED ana files without "_L" or "_R" or an extension, to save some code duplication. it also removes any spacesjust to keep things simple down the line
     new_ana_no_ext = new_ana_folder + "/" + Path(sound).stem + command.name.replace(" ", "") + current_time
@@ -142,7 +118,7 @@ def command_formatting_helper(command, ana_sequence_l, ana_sequence_r):
 
 # execute CDP program command type 1 (works on .ana files, takes 1 input analysis file, outputs 1 analysis file)
 def execute_command_1(sound, command):
-    mkdir_if_does_not_exist(new_ana_folder)
+    utilities.mkdir_if_does_not_exist(new_ana_folder)
 
     # get names/paths to original channel split .anas
     orig_ana_l, orig_ana_r = get_orig_ana_channel_splits_from_input_audio_file(sound)
@@ -163,7 +139,7 @@ def execute_command_1(sound, command):
 
 # execute CDP program command type 2 (works on .ana files, takes 2 input analysis files, outputs 1 analysis file)
 def execute_command_2(directory, sound1, sound2, command):
-    mkdir_if_does_not_exist(new_ana_folder)
+    utilities.mkdir_if_does_not_exist(new_ana_folder)
 
     # get names/paths to original channel split .anas of the first sound
     orig_ana_l1, orig_ana_r1 = get_orig_ana_channel_splits_from_input_audio_file(sound1)
@@ -188,7 +164,7 @@ def execute_command_2(directory, sound1, sound2, command):
 
 # from newly processed .ana files, synthesize them into (channel-split) wav files
 def synth(new_ana_l, new_ana_r):
-    mkdir_if_does_not_exist(new_wav_folder)
+    utilities.mkdir_if_does_not_exist(new_wav_folder)
 
     # names of wav files to be created 
     new_wav_l = new_wav_folder + "/" + Path(new_ana_l).stem + ".wav"
@@ -201,7 +177,7 @@ def synth(new_ana_l, new_ana_r):
 
 # finally, after all we've been through, merge the two synthesized wav files back into one wav file with 2 channels
 def merge(new_wav_l, new_wav_r):
-    mkdir_if_does_not_exist(finished_folder)
+    utilities.mkdir_if_does_not_exist(finished_folder)
     
     finished_sound_name = Path(new_wav_l).stem[:-2].replace(" ", "") + ".wav"
 
@@ -214,7 +190,7 @@ def choose_command_1():
     function_list = [
         blur_avrg.make_command, blur_blur.make_command, caltrain_caltrain.make_command, blur_chorus.make_command, blur_drunk.make_command, blur_noise.make_command, blur_scatter.make_command, blur_shuffle.make_command, blur_spread.make_command, blur_suppress.make_command,
         superaccu_superaccu.make_command, focus_exag.make_command, focus_focus.make_command, focus_fold.make_command, focus_freeze.make_command, focus_step.make_command, specfold_specfold.make_command,
-        hilite_bltr.make_command, glisten_glisten.make_command
+        hilite_bltr.make_command, glisten_glisten.make_command, hilite_filter.make_command, hilite_pluck.make_command
     ]
     return random.choice(function_list)()
 
@@ -243,14 +219,14 @@ for i in range(slops_to_generate):
         # SINGLE SOUND
         
         # 1. choose a file to use with a command
-        sound = choose_sound(directory)
+        sound = utilities.choose_sound(directory)
 
         # 2. choose a random command (comment this out when testing a certain command)
         random_command = choose_command_1()
         print(random_command)
 
         # uncomment to test out a certain command instead of a random one
-        # random_command = xxx.make_command()
+        # random_command = hilite_pluck.make_command()
 
         # 3. execute that command
         test = execute_command_1(sound, random_command)

@@ -13,5 +13,6 @@ commands/__pycache__
 commands/__pycache__/*.pyc
 breakpoints
 *.txt
-ff_datafiles
+/f_datafiles
 /myenv
+/segments

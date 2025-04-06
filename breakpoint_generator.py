@@ -1,9 +1,12 @@
 import random
 import os
 
-from date_time_format import get_formatted_date_time
+from utilities import get_formatted_date_time
 
 breakpoint_directory_name = "breakpoints"
+
+# change to small values to up the chaos
+breakpoint_chaos_multiplier = 0.1
 
 def breakpoint_generator(low_bound, high_bound):
 
@@ -18,8 +21,8 @@ def breakpoint_generator(low_bound, high_bound):
     file = open(filename, "x")
     
     time = 0
-    for i in range(20):
-        time = time + random.randint(1, 60)
+    for i in range(int(20 * (1/breakpoint_chaos_multiplier))):
+        time = time + random.uniform(1*breakpoint_chaos_multiplier, 60*breakpoint_chaos_multiplier)
         value = random.uniform(low_bound, high_bound)
         file.write(str(time))
         file.write(" ")
